@@ -160,66 +160,125 @@ export const registerAdmin=asyncHandler(async(req,res)=>{
 
 })
 
-export const loginAdmin=asyncHandler(async(req,res)=>{
-    //dats from frontend
-    //usename and password
-    //find user by 
-    //password match
-    // access token and refresh token
-    //send cookie in response
+// export const loginAdmin=asyncHandler(async(req,res)=>{
+//     //dats from frontend
+//     //usename and password
+//     //find user by 
+//     //password match
+//     // access token and refresh token
+//     //send cookie in response
     
 
-    const {email,fullname, password }= req.body;
+//     const {email,fullname, password }= req.body;
     
-    if(!( email)){
-        throw new ApiError (400,"username and email are required");
+//     if(!( email)){
+//         throw new ApiError (400,"username and email are required");
+//     }
+    
+//     const user= await Admin.findOne({    //findone used for single entry jo pehele milega husko swnd kar dega
+//         $or:[ { fullname },{ email }]
+//     })
+
+//     if(!user){
+//         throw new ApiError(404,"user not found with this username or email")
+//     }  
+    
+//     const isPasswordValid= await user.isPasswordCorrect(password);
+//     if(!isPasswordValid){
+//         throw new ApiError(401,"invalid password")
+//     }
+
+//     //generate tokens 
+//     const { accessToken, refreshToken }= await generateAccessAndRefreshTokens (user._id);
+
+//     //send cookie in response  ()
+    
+//     const loggedInUser=await Admin.findById(user._id).      //loggedinuser ke pass sara fields honge except password and refresh token
+//     select("-password -refreshToken");
+
+
+//     const options={
+//         httpOnly:true,          //only server can access it
+//         secure:true,
+//     }
+
+//     return res.status(200)
+//     .cookie("accessToken", accessToken, options)
+//     .cookie("refreshToken", refreshToken, options)
+//     .json(
+//         new ApiResponse(200,
+//             {
+//                 user: loggedInUser,
+//                 accessToken,
+//                 refreshToken
+//             },
+//             "user logged in successfully"
+//         )
+//     )
+
+
+
+
+// });
+
+
+export const loginAdmin = asyncHandler(async (req, res) => {
+
+    // get data from frontend
+    const { email, password } = req.body;
+
+    // validation
+    if (!email || !password) {
+        throw new ApiError(400, "Email and password are required");
     }
-    
-    const user= await Admin.findOne({    //findone used for single entry jo pehele milega husko swnd kar dega
-        $or:[ { fullname },{ email }]
-    })
 
-    if(!user){
-        throw new ApiError(404,"user not found with this username or email")
-    }  
-    
-    const isPasswordValid= await user.isPasswordCorrect(password);
-    if(!isPasswordValid){
-        throw new ApiError(401,"invalid password")
+    // find user by email
+    const user = await Admin.findOne({ email });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
     }
 
-    //generate tokens 
-    const { accessToken, refreshToken }= await generateAccessAndRefreshTokens (user._id);
+    // check password
+    const isPasswordValid = await user.isPasswordCorrect(password);
 
-    //send cookie in response  ()
-    
-    const loggedInUser=await Admin.findById(user._id).      //loggedinuser ke pass sara fields honge except password and refresh token
-    select("-password -refreshToken");
-
-
-    const options={
-        httpOnly:true,          //only server can access it
-        secure:true,
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid password");
     }
 
-    return res.status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-        new ApiResponse(200,
-            {
-                user: loggedInUser,
-                accessToken,
-                refreshToken
-            },
-            "user logged in successfully"
-        )
-    )
+    // generate tokens
+    const { accessToken, refreshToken } =
+        await generateAccessAndRefreshTokens(user._id);
 
+    // remove sensitive fields
+    const loggedInUser = await Admin.findById(user._id)
+        .select("-password -refreshToken");
 
+    // cookie options
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production"
+    };
 
-
+    // send response
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken
+                },
+                "User logged in successfully"
+            )
+        );
 });
+
+
 
 export const logoutAdmin=asyncHandler(async(req,res)=>{
     
