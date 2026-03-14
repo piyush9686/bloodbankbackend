@@ -1,7 +1,7 @@
 import {Donor} from "../models/donors.model.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/Apiresponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import {Admin} from "../models/admin.models.js";
 import {Request} from "../models/request.model.js";
 export const AddDonor = asyncHandler(async (req, res) => {
